@@ -1,0 +1,79 @@
+services: 
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+  app:
+    build: ./app
+    ports:
+      - "5000:5000"
+
+  prometheus: 
+    image: prom/prometheus
+    volumes: 
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes: 
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+  elasticsearch: 
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.21
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - xpack.license.self_generated.type=trial
+      - ELASTIC_PASSWORD=${ES_PASSWORD}
+    ports:
+      - "9200:9200"
+    volumes: 
+      - elastic-data:/usr/share/elasticsearch/data
+
+  kibana: 
+    image: docker.elastic.co/kibana/kibana:7.17.21
+    ports: 
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    environment:
+      ES_USERNAME: "${ES_USERNAME}"
+      ES_PASSWORD: "${ES_PASSWORD}"
+    volumes:
+      - ./kibana_config/kibana.yml:/usr/share/kibana/config/kibana.yml
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.17.21
+    container_name: mini-cloud-filebeat-1
+    user: root
+    volumes: 
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - elasticsearch
+
+  node-exporter: 
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    ports: 
+      - "9100:9100"
+networks: 
+  default: 
+    name: mini-cloud_default
+    driver: bridge
+volumes: 
+  grafana-data:
+  elastic-data:
+  kibana-data:
