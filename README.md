@@ -1,90 +1,125 @@
-# 🌩️ Mini Cloud at Home – Scalable Cloud Environment Simulation
+# Mini Cloud at Home
 
-[![Docker](https://img.shields.io/badge/Docker-2CA5E0?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
-[![Nginx](https://img.shields.io/badge/NGINX-269539?style=flat&logo=nginx&logoColor=white)](https://nginx.org)
-[![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=flat&logo=prometheus&logoColor=white)](https://prometheus.io)
-[![Grafana](https://img.shields.io/badge/Grafana-F46800?style=flat&logo=grafana&logoColor=white)](https://grafana.com)
-[![ELK Stack](https://img.shields.io/badge/ELK%20Stack-005571?style=flat&logo=elasticstack&logoColor=white)](https://www.elastic.co/what-is/elk-stack)
+A lightweight cloud infrastructure simulation using Docker, demonstrating core cloud concepts on local hardware. Production-like stack with reverse proxy, monitoring, and centralized logging — without cloud provider costs.
 
-A lightweight **cloud infrastructure simulation** using Docker, demonstrating core cloud concepts on local hardware. Perfect for learning cloud architecture, DevOps practices, and infrastructure monitoring without cloud provider costs.
+## What It Does
 
+Spins up a complete cloud environment on your machine with a single command:
 
-## 🚀 Key Features
+1. **Web App** served behind an Nginx reverse proxy
+2. **Metrics collection** with Prometheus + Node Exporter
+3. **Dashboards** with Grafana for real-time visualization
+4. **Centralized logging** via Elasticsearch + Filebeat + Kibana
+5. **Container orchestration** with Docker Compose
 
-- **Production-like cloud stack** on a single machine
-- **HTTPS reverse proxy** with Nginx
-- **Multi-container isolation** with Docker Compose
-- **Real-time monitoring** with Prometheus + Grafana
-- **Centralized logging** via ELK Stack (Elasticsearch + Kibana)
-- **Infrastructure-as-Code** configuration
-- **Persistent storage** with volumes
+```
+User request
+     ↓
+┌──────────┐     ┌──────────┐
+│  Nginx   │────▶│ Flask App│
+│  (proxy) │     │ (:5000)  │
+└──────────┘     └──────────┘
 
-## 🏗️ Architecture Components
+Monitoring:
+┌───────────────┐     ┌──────────┐     ┌──────────┐
+│ Node Exporter │────▶│Prometheus│────▶│ Grafana  │
+│ (metrics)     │     │ (:9090)  │     │ (:3000)  │
+└───────────────┘     └──────────┘     └──────────┘
 
-|     Component     |       Purpose                    |     Technology     |
-| ----------------- | -------------------------------- | ------------------ |
-| **Reverse Proxy** | SSL termination & load balancing |      Nginx         |
-| **Web App**       | Sample application               |      Flask         |
-| **Monitoring**    | Metrics collection & dashboard   | Prometheus+Grafana |
-| **Logging**       | Log aggregation & visualization  |      ELK Stack     |
-| **Orchestration** | Container management             | Docker Compose     |
+Logging:
+┌──────────┐     ┌───────────────┐     ┌──────────┐
+│ Filebeat │────▶│ Elasticsearch │────▶│ Kibana   │
+│ (shipper)│     │ (:9200)       │     │ (:5601)  │
+└──────────┘     └───────────────┘     └──────────┘
+```
 
-## 🛠️ Prerequisites
+## Architecture
+
+| Component | Purpose | Technology |
+|-----------|---------|------------|
+| Reverse Proxy | Request routing and load balancing | Nginx |
+| Web App | Sample application | Flask (Python) |
+| Metrics | System and container metrics collection | Prometheus + Node Exporter |
+| Dashboards | Real-time visualization | Grafana |
+| Log Aggregation | Collect logs from all containers | Filebeat |
+| Log Storage | Index and search logs | Elasticsearch |
+| Log Visualization | Explore and query logs | Kibana |
+| Orchestration | Container management | Docker Compose |
+
+## Project Structure
+
+```
+Mini_cloud_at_home/
+├── app/
+│   ├── Dockerfile           # Flask app container
+│   ├── app.py               # Flask application
+│   └── requirements.txt     # Python dependencies
+├── nginx/
+│   ├── Dockerfile           # Nginx container
+│   └── nginx.conf           # Reverse proxy configuration
+├── prometheus/
+│   └── prometheus.yml       # Metrics scrape targets
+├── filebeat/
+│   └── filebeat.yml         # Log shipping configuration
+├── kibana_config/
+│   └── kibana.yml           # Kibana settings
+├── docker-compose.yml       # Full stack orchestration
+└── .env                     # Environment variables
+```
+
+## Services and Ports
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| Web App | `http://localhost:5000` | Flask application |
+| Nginx | `http://localhost:80` | Reverse proxy |
+| Grafana | `http://localhost:3000` | Monitoring dashboards |
+| Prometheus | `http://localhost:9090` | Metrics collection |
+| Kibana | `http://localhost:5601` | Log visualization |
+| Elasticsearch | `http://localhost:9200` | Log storage and search |
+| Node Exporter | `http://localhost:9100` | System metrics |
+
+## Setup
+
+### Prerequisites
 
 - Docker Engine `v20.10+`
 - Docker Compose `v2.5+`
 - 4GB+ RAM (8GB recommended for full stack)
 
-## 🏁 Quick Start
+### Quick Start
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/mini-cloud-at-home.git
-   cd mini-cloud-at-home
-   ```
-2. Configure environment variables:
-   ```bash
-   cp .env.example .env
-   # Edit .env file as needed
-   ```
-3. Start the stack:
-   ```bash
-   docker-compose up -d --build
-   ```
-4. Access the services:
-   - Web App: `http://localhost:5000`
-   - Grafana: `http://localhost:3000`
-   - Kibana: `http://localhost:5601`
-   - Prometheus: `http://localhost:9090`
-   - Elasticsearch: `http://localhost:9200`
+```bash
+git clone https://github.com/0xShyam-Sec/Mini_cloud_at_home.git
+cd Mini_cloud_at_home
 
-## 🔧 Customization
+cp .env.example .env
+# Edit .env with your passwords
+
+docker-compose up -d --build
+```
+
+### Shut Down
+
+```bash
+docker-compose down
+```
 
 ### Adding New Services
 
-    - Add service definition in `docker-compose.yml`
-    - Configure proxy rules in `nginx/conf.d/`
-    - Add monitoring targets in `prometheus/prometheus.yml`
+1. Add service definition in `docker-compose.yml`
+2. Configure proxy rules in `nginx/nginx.conf`
+3. Add monitoring targets in `prometheus/prometheus.yml`
 
-### Using Your Own Web App
+## Troubleshooting
 
-Replace the contents of `app/` with your application code.
+| Problem | Solution |
+|---------|----------|
+| Containers won't start | Ensure Docker is running and ports aren't in use |
+| Grafana not loading | Wait 30 seconds after startup for all services to initialize |
+| Filebeat permission error | Reset file permissions: delete `filebeat.yml`, recreate it, and set read-only permissions for your user |
+| Elasticsearch out of memory | Increase Docker memory limit to 8GB in Docker Desktop settings |
 
-## 🤝 Contributing
+## License
 
-Pull requests are welcome! For major changes, please open an issue first.
-
-NOTE: To successfully edit and save changes in the `filebeat.yml` file, you may need to adjust file permissions or use a text editor with elevated privileges.
-
-Temporary solution:
-
-1. Copy present contents of `filebeat.yml` to a new file.
-2. Delete the original `filebeat.yml`.
-3. Create a new `filebeat.yml` file and paste the copied contents.
-4. Run following commands in command prompt to finalize the changes:
-   ```bash
-    cd F:\Projects\mini-cloud\filebeat
-    icacls filebeat.yml /remove:g *S-1-1-0
-    icacls filebeat.yml /inheritance:r
-    icacls filebeat.yml /grant "%USERNAME%:R"
-   ```
+MIT
